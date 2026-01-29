@@ -1,0 +1,33 @@
+{
+  "name": "notesync",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsc --noEmit && npx tsx watch src/index.ts"
+  },
+  "keywords": [
+    "notes",
+    "collaboration",
+    "real-time",
+    "jwt",
+    "security",
+    "redis",
+    "rate-limiting",
+    "sharing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "A secure, real-time collaborative note-taking application with JWT authentication, advanced rate limiting, and Redis caching for seamless multi-user synchronization.",
+  "dependencies": {
+    "@tsconfig/node20": "^20.1.8",
+    "config": "^4.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mysql2": "^3.16.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
