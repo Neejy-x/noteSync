@@ -9,9 +9,14 @@ export class NotesService {
     static async getAllNotes(
         // userId: number
 ): Promise<NoteResponse[]> {
-        const [rows] = await pool.execute<NoteRow[]>(
-            'SELECT title, content FROM notes'
+    try{
+         const [rows] = await pool.query<NoteRow[]>(
+            `SELECT title, content FROM notes`
         )
         return rows
+    }catch(err){
+        throw new Error(`Unable to get notes: ${err}`)
     }
 }
+    }
+       

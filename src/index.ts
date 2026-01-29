@@ -2,6 +2,7 @@ import express, { Express } from "express"
 import 'dotenv/config'
 import { noteRouter } from "./routes/notes.routes"
 import { notFoundHandler } from './middlewares/notfound.middlewares'
+import { errorHandler } from "./middlewares/errorHandler.middlewares"
 
 const app = express()
 
@@ -9,6 +10,7 @@ const app = express()
 app.use(express.json())
 app.use('/notes', noteRouter)
 app.use(notFoundHandler)
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3000;
 
