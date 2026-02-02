@@ -11,10 +11,10 @@ interface signupResponse {
     refreshToken: string;
 }
 
-export class authService {
+export class AuthService {
 
-    static async signUp (userPayload: {username: string; password: string; email: string}): Promise<signupResponse>{
-        const {username, password, email} = userPayload;
+    static async signUp ({username, password, email}: {username: string; password: string; email: string}): Promise<signupResponse>{
+
         const hashed_password = await bcrypt.hash(password, 12)
         await pool.query<ResultSetHeader>(
             `INSERT INTO users (username, hashed_password, email)
