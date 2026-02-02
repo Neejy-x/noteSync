@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { UserDTO } from '../dto/responses/user.response';
+import { SignUpInput } from '../validators/auth.validators';
 
 
 
 export const signUpHandler = async (
-    req: Request,
+    req: Request<{}, {}, SignUpInput>,
     res: Response<{Success: boolean, message: string, data: UserDTO, accessToken: string}>
 ) => {
     const {username, password, email} = req.body;

@@ -32,12 +32,12 @@ export class AuthService {
         const accessToken = jwt.sign(
             {userId: user.user_id, role: user.role},
             process.env.JWT_ACCESS_SECRET!,
-            {expiresIn: process.env.JWT_ACCESS_EXPIRES_IN}
+            {expiresIn: process.env.JWT_ACCESS_EXPIRES_IN!}
         )
         const refreshToken = jwt.sign(
             {userId: user.user_id, role: user.role},
-            process.env.JWT_REFRESH_SECRET!,
-            {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN}
+            process.env.JWT_REFRESH_SECRET as string,
+            {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as string}
         )
         await pool.query<ResultSetHeader>(
             `INSERT INTO refresh_tokens (user_id, token)
