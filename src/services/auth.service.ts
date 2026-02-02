@@ -2,43 +2,49 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import { pool } from '../db/pool';
 import type { ResultSetHeader } from 'mysql2/promise';
-import { UserCreateDTO } from '../dto/input/user.create';
 import { UserDTO } from '../dto/responses/user.response';
 
 
+interface signupResponse {
+    user: UserDTO;
+    accessToken: string;
+    refreshToken: string;
+}
+
 export class authService {
-    static async signup(userPayload: UserCreateDTO): Promise<UserDTO> {
 
-        const { username, password, email } = userPayload;
-        const hashedPassword = await bcrypt.hash(password, 12)
-
-        const [result] = await pool.query<ResultSetHeader>(
-            `INSERT INTO users (username, email, password)
-            VALUES (?, ?, ?)`,
-            [username, email, hashedPassword])
-
-        const user: UserDTO = {
-            id: result.insertId,
-            username,
-            email,
-            role: 'user'
-        }
-
-        const token = jwt.sign(
-            { id: user.id, role: user.role },
-            process.env.JWT_SECRET as string,
-            { expiresIn: process.env.JWT_EXPIRES_IN as string }
+    static async signUp (userPayload: {username: string; password: string; email: string}): Promise<signupResponse>{
+        const {username, password, email} = userPayload;
+        const hashed_password = await bcrypt.hash(password, 12)
+        await pool.query<ResultSetHeader>(
+            `INSERT INTO users (username, hashed_password, email)
+            VALUES(?, ?, ?)`,
+            [username, hashed_password,, email]
         )
+        const [rows] = await pool.query<any[]>(
+            `SELECT id, username, email, role
+            FROM users
+            WHERE email = ?`, 
+            [email])
 
+        const user: UserDTO = rows[0];
+
+        const accessToken = jwt.sign(
+            {userId: user.user_id, role: user.role},
+            process.env.JWT_ACCESS_SECRET!,
+            {expiresIn: process.env.JWT_ACCESS_EXPIRES_IN}
+        )
         const refreshToken = jwt.sign(
-            { id: user.id, role: user.role },
-            process.env.JWT_REFRESH_TOKEN as string,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as string }
+            {userId: user.user_id, role: user.role},
+            process.env.JWT_REFRESH_SECRET!,
+            {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN}
         )
-
-        const [rows] = await pool.query<ResultSetHeader>(
-            `INSERT INTO tokens (user_id, token, refresh_token)`
+        await pool.query<ResultSetHeader>(
+            `INSERT INTO refresh_tokens (user_id, token)
+            VALUES(?, ?)`,
+            [user.user_id, refreshToken]
         )
-
+        return {user, accessToken, refreshToken}
     }
+    
 }

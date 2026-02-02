@@ -4,7 +4,7 @@ content: string
 }
 
 export interface UserDTO {
-    id: number,
+    user_id: number,
     username: string,
     email: string,
     role?: string
