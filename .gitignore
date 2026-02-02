@@ -1,5 +1,4 @@
 *.env
-*.sql
 logs/
 *.log
 .DS_Store
