@@ -2,10 +2,11 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { UserDTO } from '../dto/responses/user.response';
 import { loginInput, SignUpInput } from '../validators/auth.validators';
+import { catchAsync } from '../utils/catchAsync';
 
 
 
-export const signUpHandler = async (
+export const signUpHandler = catchAsync(async (
     req: Request<{}, {}, SignUpInput>,
     res: Response<{Success: boolean, message: string, data: UserDTO, accessToken: string}>
 ) => {
@@ -24,9 +25,9 @@ export const signUpHandler = async (
         },
         accessToken
     })
-}
+})
 
-export const loginHandler = async(
+export const loginHandler = catchAsync(async(
     req: Request<{}, {}, loginInput>, 
     res:Response<{Success: boolean, message: string, data: UserDTO, accessToken: string}>
 ) => {
@@ -48,9 +49,9 @@ export const loginHandler = async(
         accessToken
     })
 
-}
+})
 
-export const logoutHandler = async(req:Request, res:Response<{Success: boolean, message: string}>) => {
+export const logoutHandler = catchAsync(async(req:Request, res:Response<{Success: boolean, message: string}>) => {
     const cookies = req.cookies
     if(!cookies?.jwt){
         return res.status(204).json({Success: false, message: 'not token'})
@@ -66,4 +67,4 @@ export const logoutHandler = async(req:Request, res:Response<{Success: boolean, 
         Success: true,
         message: 'Logout Successful'
     })
-}
+})
