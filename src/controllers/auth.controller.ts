@@ -13,6 +13,7 @@ export const signUpHandler = async (
     const {user, accessToken, refreshToken} = await AuthService.signUp({username, password, email})
     res.cookie('jwt', refreshToken, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 7 * 24 * 60 * 60 * 1000
     })
     res.status(201).json({
@@ -22,5 +23,18 @@ export const signUpHandler = async (
             ...user,
         },
         accessToken
+    })
+}
+
+export const logoutHandler = async(req:Request, res:Response<{Success: boolean, message: string}>) => {
+    const cookies = req.cookies
+    if(!cookies?.jwt){
+        return res.status(204).json({Success: false, message: 'not token'})
+    } 
+    const refreshToken = cookies.jwt
+    await AuthService.logout(refreshToken)
+    res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production'
     })
 }
