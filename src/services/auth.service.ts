@@ -10,19 +10,26 @@ interface signupResponse {
     accessToken: string;
     refreshToken: string;
 }
+const secret = String(process.env.JWT_SECRET);
+const refreshSecret = String(process.env.JW_REFRESH_SECRET);
 
 export class AuthService {
 
     static async signUp ({username, password, email}: {username: string; password: string; email: string}): Promise<signupResponse>{
-
         const hashed_password = await bcrypt.hash(password, 12)
-        await pool.query<ResultSetHeader>(
+        const connection = await pool.getConnection()
+        
+        try {
+
+        await connection.beginTransaction()
+
+        await connection.execute<ResultSetHeader>(
             `INSERT INTO users (username, hashed_password, email)
             VALUES(?, ?, ?)`,
-            [username, hashed_password,, email]
+            [username, hashed_password, email]
         )
-        const [rows] = await pool.query<any[]>(
-            `SELECT id, username, email, role
+        const [rows] = await connection.execute<any[]>(
+            `SELECT user_id, username, email, role
             FROM users
             WHERE email = ?`, 
             [email])
@@ -31,20 +38,28 @@ export class AuthService {
 
         const accessToken = jwt.sign(
             {userId: user.user_id, role: user.role},
-            process.env.JWT_ACCESS_SECRET!,
-            {expiresIn: process.env.JWT_ACCESS_EXPIRES_IN!}
+            secret,
+            {expiresIn: process.env.JWT_EXPIRES_IN as any}
         )
         const refreshToken = jwt.sign(
             {userId: user.user_id, role: user.role},
-            process.env.JWT_REFRESH_SECRET as string,
-            {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as string}
+            refreshSecret,
+            {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as any}
         )
-        await pool.query<ResultSetHeader>(
+        await connection.execute<ResultSetHeader>(
             `INSERT INTO refresh_tokens (user_id, token)
             VALUES(?, ?)`,
             [user.user_id, refreshToken]
         )
+
+        await connection.commit()
         return {user, accessToken, refreshToken}
+    }catch(err){
+        await connection.rollback()
+        throw err
+    }finally{
+        connection.release()
+    }
     }
     
 }

@@ -1,5 +1,6 @@
 import {Request, Response, NextFunction } from 'express';
 import winston from 'winston'
+import { ZodError } from 'zod';
 
 
 const {json, combine, simple, timestamp, errors} = winston.format;
@@ -27,9 +28,13 @@ export const logger = winston.createLogger({
     exitOnError: false
 })
 
-export const errorHandler = (err: Error, req: Request, res: Response<{Success: boolean, message: string} | {errors: string}>, next: NextFunction) => {
-     if(err.name ==='ZodError'){
-        return res.status(400).json({errors: err.message})
+export const errorHandler = (err: Error, req: Request, res: Response<{Success: boolean, message: string, errors?: any} | {errors: string}>, next: NextFunction) => {
+     if(err instanceof ZodError){
+        return res.status(400).json({
+            Success: false,
+            message: 'Validation Error',
+            errors: err.flatten().fieldErrors
+        })
     }
 
     const statusCode = res.statusCode || 500;
