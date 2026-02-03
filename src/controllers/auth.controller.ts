@@ -31,10 +31,15 @@ export const logoutHandler = async(req:Request, res:Response<{Success: boolean, 
     if(!cookies?.jwt){
         return res.status(204).json({Success: false, message: 'not token'})
     } 
-    const refreshToken = cookies.jwt
+    const refreshToken:string = cookies.jwt
     await AuthService.logout(refreshToken)
     res.clearCookie('jwt', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production'
+    })
+
+    res.status(200).json({
+        Success: true,
+        message: 'Logout Successful'
     })
 }

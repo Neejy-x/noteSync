@@ -62,18 +62,18 @@ export class AuthService {
     }
     }
 
-    static async logout(refreshToken: string): Promise<void>{
-       const connnection = await pool.getConnection()
-    try{
-        const decoded = jwt.sign(refreshToken, refreshSecret)
-        const [result] = await connnection.execute<ResultSetHeader>(
-            `DELETE FROM refresh_tokens WHERE user_id = ?`,
-            [decoded.userId]
+    static async logout(refreshToken: string){
+        try{
+
+        const decoded = jwt.verify(refreshToken, refreshSecret) as {userId: string, role: string}
+        const [result] = await pool.execute<ResultSetHeader>(
+            `DELETE FROM refresh_tokens WHERE token = ? AND user_id = ?`,
+            [ refreshToken,decoded.userId]
         )
+        return result.affectedRows > 0
     }catch(err){
-
+        return false
     }
-
     }
     
    
