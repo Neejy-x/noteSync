@@ -78,7 +78,6 @@ export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<
 
     const oldToken = cookies.jwt
     try{
-
     
     const {accessToken, refreshToken, user} = await AuthService.token(oldToken)
     res.cookie(
