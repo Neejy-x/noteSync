@@ -99,4 +99,4 @@ export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<
     res.clearCookie('jwt', {httpOnly: true, secure: process.env.NODE_ENV === 'production'})
     throw err
 }
-})
+}) 
