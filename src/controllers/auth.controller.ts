@@ -3,6 +3,7 @@ import { AuthService } from '../services/auth.service';
 import { UserDTO } from '../dto/responses/user.response';
 import { loginInput, SignUpInput } from '../validators/auth.validators';
 import { catchAsync } from '../utils/catchAsync';
+import { success } from 'zod';
 
 
 
@@ -69,7 +70,7 @@ export const logoutHandler = catchAsync(async(req:Request, res:Response<{Success
     })
 })
 
-export const refreshTokenHandler = catchAsync(async(req: Request, res: Response) => {
+export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<{Success: boolean, message: string, data?: UserDTO, accessToken?: string}>) => {
     const cookies = req. cookies
     if(!cookies?.jwt){
         return res.status(204).json({Success: false, message: 'no token'})
@@ -77,5 +78,20 @@ export const refreshTokenHandler = catchAsync(async(req: Request, res: Response)
 
     const oldToken = cookies.jwt
 
-    const refreshToken = await AuthService.token(oldToken)
+    const {accessToken, refreshToken, user} = await AuthService.token(oldToken)
+    res.cookie(
+        'jwt', refreshToken,
+        {   
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        }
+    )
+
+    res.status(201).json({
+        Success: true,
+        message: 'Token refreshed',
+        data: user,
+        accessToken
+    })
 })

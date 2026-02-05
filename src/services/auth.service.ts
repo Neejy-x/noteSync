@@ -119,7 +119,7 @@ export class AuthService {
     }
     }
     
-   static async token(oldToken: string){
+   static async token(oldToken: string): Promise<signupResponse>{
     const connection = await pool.getConnection()
 
     try{
