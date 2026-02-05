@@ -54,7 +54,7 @@ export const loginHandler = catchAsync(async(
 export const logoutHandler = catchAsync(async(req:Request, res:Response<{Success: boolean, message: string}>) => {
     const cookies = req.cookies
     if(!cookies?.jwt){
-        return res.status(204).json({Success: false, message: 'not token'})
+        return res.status(204).json({Success: false, message: 'no token'})
     } 
     const refreshToken:string = cookies.jwt
     await AuthService.logout(refreshToken)
@@ -67,4 +67,15 @@ export const logoutHandler = catchAsync(async(req:Request, res:Response<{Success
         Success: true,
         message: 'Logout Successful'
     })
+})
+
+export const refreshTokenHandler = catchAsync(async(req: Request, res: Response) => {
+    const cookies = req. cookies
+    if(!cookies?.jwt){
+        return res.status(204).json({Success: false, message: 'no token'})
+    }
+
+    const oldToken = cookies.jwt
+
+    const refreshToken = await AuthService.token(oldToken)
 })

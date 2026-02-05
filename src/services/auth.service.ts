@@ -119,5 +119,60 @@ export class AuthService {
     }
     }
     
+   static async token(oldToken: string){
+    const connection = await pool.getConnection()
+
+    try{
+        await connection.beginTransaction()
+
+        const decoded = jwt.verify(oldToken, refreshSecret) as {userId: string, role: string}
+        const [rows] = await connection.execute<UserDTO[] & RowDataPacket[]>(
+            `SELECT user_id, role FROM users
+            WHERE user_id = ?`,
+            [decoded.userId]
+        )
+        const user = rows[0]
+        if(!user){
+            const err = new Error('invalid user') as Error & {statusCode: number}
+            err.statusCode = 401
+            throw err
+        }
+
+        const [result] = await connection.execute<ResultSetHeader>(
+            `DELETE FROM refresh_tokens
+            WHERE user_id = ? AND token = ? `,
+            [user.user_id, oldToken]
+        )
+
+        if (result.affectedRows != 1 ){
+            await connection.execute(
+                `DELETE FROM refresh_tokens
+                WHERE user_id = ?`,
+                [user.user_id]
+            )
+            await connection.commit()
+            const err = new Error('Invalid refreshToken') as Error & {statusCode: number}
+            err.statusCode = 403
+            throw err
+        }
+
+        const accessToken = jwt.sign({userId: user.user_id, role: user.role}, secret, {expiresIn: process.env.JWT_EXPIRES_IN as any})
+        const refreshToken = jwt.sign({userId: user.user_id, role: user.role}, refreshSecret, {expiresIn: process.env.JWT_REFRSH_EXPIRES_IN as any})
+
+        //add new refreshTpoken to database
+        await connection.execute(
+            `INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)`,
+            [user.user_id, refreshToken]
+        );
+        
+        await connection.commit()
+        return {accessToken, refreshToken, user}
+    }catch(err){
+        await connection.rollback()
+        throw err
+    }finally{
+        connection.release()
+    }
    
+   }
 }
