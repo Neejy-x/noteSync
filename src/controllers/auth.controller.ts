@@ -77,7 +77,9 @@ export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<
     }
 
     const oldToken = cookies.jwt
+    try{
 
+    
     const {accessToken, refreshToken, user} = await AuthService.token(oldToken)
     res.cookie(
         'jwt', refreshToken,
@@ -94,4 +96,8 @@ export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<
         data: user,
         accessToken
     })
+}catch(err: any){
+    res.clearCookie('jwt', {httpOnly: true, secure: process.env.NODE_ENV === 'production'})
+    throw err
+}
 })
