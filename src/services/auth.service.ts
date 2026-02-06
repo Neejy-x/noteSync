@@ -5,6 +5,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { UserDTO } from '../dto/responses/user.response';
 import { loginInput } from '../validators/auth.validators';
 import client from '../config/redisClient';
+import { nanoid } from 'nanoid';
 
 interface signupResponse {
     user: UserDTO;
@@ -16,6 +17,8 @@ const secret = String(process.env.JWT_SECRET);
 const refreshSecret = String(process.env.JW_REFRESH_SECRET);
 
 export class AuthService {
+
+
 
     static async signUp (
         {username, password, email, deviceName, ip}:
@@ -52,7 +55,7 @@ export class AuthService {
             refreshSecret,
             {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as any}
         )
-
+        const sessionId = nanoid()
         const sessionData = {
             token: refreshToken,
             deviceName,
@@ -61,7 +64,8 @@ export class AuthService {
         }
 
         await client.multi()
-        .hSet(`sessions:${user.user_id}`, refreshToken, JSON.stringify(sessionData) )
+        .set(`token_to_session:${refreshToken}`, sessionId, {EX: 7 * 24 * 60 * 60})
+        .hSet(`sessions:${user.user_id}`, sessionId, JSON.stringify(sessionData) )
         .expire(`sessions:${user.user_id}`, 7 * 24 * 60 * 60)
         .exec()
         
@@ -80,6 +84,10 @@ export class AuthService {
         connection.release()
     }
     }
+
+
+
+
 
     static async login({username, password, deviceName, ip}: loginInput & { deviceName: string, ip: string | undefined }):Promise<signupResponse> {
         //Fetch user from DB
@@ -110,7 +118,7 @@ export class AuthService {
         //Generate JWTs
         const accessToken = jwt.sign({userId: user.user_id, role: user.role}, secret, {expiresIn: process.env.JWT_EXPIRES_IN as any})
         const refreshToken = jwt.sign({userId: user.user_id, role: user.role}, refreshSecret, {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as any})
-
+        const sessionId = nanoid()
         const sessionData = {
             token: refreshToken,
             deviceName,
@@ -120,7 +128,8 @@ export class AuthService {
 
         //insert token into db
         await client.multi()
-        .hSet(`sessions:${user.user_id}`, refreshToken, JSON.stringify(sessionData))
+        .set(`token_tosession:${refreshToken}`, sessionId, {EX: 7 * 24 * 60 * 60})
+        .hSet(`sessions:${user.user_id}`, sessionId, JSON.stringify(sessionData))
         .expire(`sessions:${user.user_id}`, 7 * 24 * 60 * 60)
         .exec()
 
@@ -134,12 +143,24 @@ export class AuthService {
     
     }
 
+
+
+
+
+
+
     static async logout(refreshToken: string){
         try{
 
         const decoded = jwt.verify(refreshToken, refreshSecret) as {userId: string, role: string}
-
-        return await client.hDel(`sessions:${decoded.userId}`, refreshToken)
+        const pointerKey = `token_to_session:${refreshToken}`
+        const sessionId = await client.get(pointerKey)
+        if(!sessionId) return false
+        await client.multi()
+         .hDel(`sessions:${decoded.userId}`, sessionId)
+         .del(pointerKey)
+         .exec()
+        return true;
         // const [result] = await pool.execute<ResultSetHeader>(
         //     `DELETE FROM refresh_tokens WHERE token = ? AND user_id = ?`,
         //     [ refreshToken,decoded.userId]
@@ -147,9 +168,13 @@ export class AuthService {
         // return result.affectedRows > 0
     }catch(err){
         return false
-    }
-    }
+    }}
     
+
+
+
+
+
    static async token({oldToken, deviceName, ip}: {oldToken:string, deviceName: string, ip: string | undefined}): Promise<signupResponse>{
     const connection = await pool.getConnection()
 
@@ -168,8 +193,14 @@ export class AuthService {
             err.statusCode = 401
             throw err
         }
-
-        const sessionExists = await client.hExists(`sessions:${user.user_id}`, oldToken)
+        const pointerKey = `token_to_session:${oldToken}`
+        const oldSessionId = await client.get(pointerKey)
+        if(!oldSessionId){
+            const err = new Error('invalid session') as Error & {statusCode: number}
+            err.statusCode = 401
+            throw err
+        }
+        const sessionExists = await client.hExists(`sessions:${user.user_id}`, oldSessionId)
         if(!sessionExists){
             await client.del(`sessions:${user.user_id}`)
             const err = new Error('Invalid token') as Error & {statusCode: number}
@@ -187,9 +218,13 @@ export class AuthService {
             createdAt: Date.now()
         }
 
+        const newSessionId = nanoid()
+        
         const results = await client.multi()
-        .hDel(`sessions:${user.user_id}`, oldToken)
-        .hSet(`sessions:${user.user_id}`, refreshToken, JSON.stringify(sessionData))
+        .del(pointerKey)// Delete old pointer
+        .hDel(`sessions:${user.user_id}`, oldSessionId)// Delete old session field
+        .set(`token_to_session:${refreshToken}`, newSessionId, {EX: 7 * 24 * 60 * 60})
+        .hSet(`sessions:${user.user_id}`, newSessionId, JSON.stringify(sessionData))
         .expire(`sessions:${user.user_id}`, 7 * 24 * 60 * 60)
         .exec()
 
@@ -237,4 +272,9 @@ export class AuthService {
     }
    
    }
-}
+
+
+
+
+
+
