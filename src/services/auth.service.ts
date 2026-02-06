@@ -149,7 +149,7 @@ export class AuthService {
 
 
 
-    static async logout(refreshToken: string){
+    static async logout(refreshToken: string): Promise<Boolean>{
         try{
 
         const decoded = jwt.verify(refreshToken, refreshSecret) as {userId: string, role: string}
@@ -278,7 +278,8 @@ export class AuthService {
 
 
 
-   static async getSessions(user_id: string){
+   static async getSessions(user_id: string): 
+   Promise<{sessionId: string; data: {}} | undefined | []>{
     const allSessions = await client.hGetAll(`sessions:${user_id}`)
     if(Object.keys(allSessions).length === 0) return []
     Object.entries(allSessions).map(([sessionId, sessionData]) => {
@@ -289,5 +290,19 @@ export class AuthService {
         ...data
       }
     })
+   }
+
+
+
+   static async endSession({user_id, sessionId}: {user_id: string; sessionId:string}){
+
+    const sessionData = await client.hGet(`sessions:${user_id}`, sessionId)
+    if(!sessionData) return false
+    const {token} = JSON.parse(sessionData)
+    await client.multi()
+    .del(`token_tosession${token}`)
+    .hDel(`sessions:${user_id}`, sessionId)
+    .exec()
+    return true
    }
 }

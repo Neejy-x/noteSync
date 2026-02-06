@@ -2,7 +2,7 @@ import type {Request, Response} from 'express'
 import { AuthService } from '../services/auth.service'
 
 
-export const sessionsHandler = (req: Request, res: Response<{Success: boolean, message: string, data?: {} }>) => {
+export const getSessionsHandler = (req: Request, res: Response<{Success: boolean, message: string, data?: {} }>) => {
      
     if(!req.user){
         return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
@@ -15,4 +15,19 @@ export const sessionsHandler = (req: Request, res: Response<{Success: boolean, m
         message: 'Active sessions',
         data: sessions
     })
+}
+
+export const endSessionHandler = async (req: Request, res: Response<{Success: boolean, message: string}>) => {
+    const sessionId = req.body
+    if(!req.user){
+        return res.status(403).json({Success: false, message: 'Unauthorized: user not validated'})
+    }
+    const { user_id }  = req.user
+     const success = await AuthService.endSession({user_id, sessionId})
+     if(!success) return res.status(404).json({Success: false, message: 'session previously terminated'})
+    
+        res.status(200).json({
+            Success: true,
+            message: 'Session terminated'
+        })
 }
