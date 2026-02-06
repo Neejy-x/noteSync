@@ -277,20 +277,21 @@ export class AuthService {
 
 
 
+static async getSessions(user_id: string): Promise<{ sessionId: string; data: {} }[] | []> {
+  const allSessions = await client.hGetAll(`sessions:${user_id}`);
 
-   static async getSessions(user_id: string): 
-   Promise<{sessionId: string; data: {}} | undefined | []>{
-    const allSessions = await client.hGetAll(`sessions:${user_id}`)
-    if(Object.keys(allSessions).length === 0) return []
-    Object.entries(allSessions).map(([sessionId, sessionData]) => {
-       const parsed = JSON.parse(sessionData) 
-      const {token, ...data} = parsed
-      return {
-        sessionId, 
-        ...data
-      }
-    })
-   }
+  if (Object.keys(allSessions).length === 0) return [];
+
+  return Object.entries(allSessions).map(([sessionId, sessionData]) => {
+    const parsed = JSON.parse(sessionData);
+    const { token, ...data } = parsed;
+    return {
+      sessionId,
+      data,
+    };
+  });
+}
+
 
 
 

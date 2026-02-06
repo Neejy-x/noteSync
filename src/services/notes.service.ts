@@ -1,6 +1,7 @@
 import {pool} from  '../db/pool';
 import type { RowDataPacket} from 'mysql2/promise'
 import { NoteResponse } from '../dto/responses/user.response.js';
+import client from '../config/redisClient';
 
 
 type NoteRow = NoteResponse & RowDataPacket
@@ -13,8 +14,22 @@ export class NotesService {
     const offset = (page - 1) * limit
 
     try{
+        const pointerKey = `notes:${user_id}`
+        const isCached = await client.Exists(pointerKey)
+        if(isCached){
+            const cachedNotes = await client.hGetAll(pointerKey)
+            if(Object.keys(cachedNotes).length === 0) return [];
+
+            return Object.entries(cachedNotes).map(([noteId, noteData]) => {
+                const parsed = JSON.parse(noteData);
+                return {
+                    noteId,
+                    ...parsed
+                }
+            })
+        }
          const [rows] = await pool.query<NoteRow[]>(
-            `SELECT DISTINCT n.note_id, n.title, n.content 
+            `SELECT DISTINCT n.note_id, n.title, n.content, n.updated_at 
             FROM notes n
             JOIN contributions c USING(note_id)
             WHERE n.owner_id = ?
@@ -24,11 +39,56 @@ export class NotesService {
             [user_id, user_id, limit, offset]
         )
         if(rows.length === 0) return []
-
+        const pipeline = client.multi()
+        rows.forEach(
+            r => {
+                pipeline.hSet( pointerKey, r.note_id, JSON.stringify({
+                    title: r.title,
+                    content: r.content,
+                    updated_at: r.updated_at
+                }))
+            })
+        pipeline.expire(pointerKey, 10 * 60)
+        await pipeline.exec()
         return rows
     }catch(err){
         throw new Error(`Unable to get notes: ${err}`)
     }
 }
+
+
+
+
+
+    static async getNote({user_id, noteId}: {user_id: string, noteId: string}):Promise<NoteResponse | undefined>{
+
+        const pointerKey = `notes${user_id}`
+        const isCached = await client.hExists(pointerKey, noteId)
+        if(isCached){
+            const note = await client.hGet(pointerKey, noteId)
+            if(note) return JSON.parse(note)
+        }
+        const [rows] = await pool.execute<NoteRow[]>(
+            `SELECT DISTINCT n.note_id, n.title, n.content
+            FROM notes n
+            JOIN contributions c USING(note_id)
+            WHERE (n.note_id = ? AND n.owner_id = ?)
+             OR (c.note_id = ? AND c.user_id = ?)
+
+            ORDER BY n.updated_at DESC`,
+            [noteId, user_id, noteId, user_id]
+        )
+        const note = rows[0]
+        if(!note) return undefined
+        await client.hSet(`notes:${user_id}`, noteId, JSON.stringify({
+            title: note.title,
+             content: note.content,
+              updated_at: note.updated_at}
+            ))
+
+        return note
+    }
+
+    
     }
        
