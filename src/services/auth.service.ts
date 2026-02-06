@@ -278,3 +278,16 @@ export class AuthService {
 
 
 
+   static async getSessions(user_id: string){
+    const allSessions = await client.hGetAll(`sessions:${user_id}`)
+    if(Object.keys(allSessions).length === 0) return []
+    Object.entries(allSessions).map(([sessionId, sessionData]) => {
+       const parsed = JSON.parse(sessionData) 
+      const {token, ...data} = parsed
+      return {
+        sessionId, 
+        ...data
+      }
+    })
+   }
+}
