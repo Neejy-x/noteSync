@@ -30,8 +30,11 @@ export const getNoteById = catchAsync(async (req: Request<{noteId: string}>, res
 
         const {noteId} = req.params
         if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
-        const user_id = req.user?.user_id
+        const user_id = req.user.user_id
         
         const note = await NotesService.getNote({user_id, noteId})
+        if(!note) return res.status(404).json({Success: false, message: 'Note not found'})
+        
+        res.status(200).json({Success: true, message: '', data: note})
 
 })

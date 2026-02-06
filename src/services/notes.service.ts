@@ -89,6 +89,5 @@ export class NotesService {
         return note
     }
 
-    
     }
        
