@@ -5,7 +5,7 @@ import { endSessionHandler, getSessionsHandler } from '../controllers/sessions.c
 import { sessionIdValidator } from '../validators/session.validators'
 import { validate } from '../middlewares/validator.middleware'
 
-const sessionsRouter: Router = express.Router()
+export const sessionsRouter: Router = express.Router()
 
 sessionsRouter.get('/', authenticate, getSessionsHandler)
 sessionsRouter.post('/end/:sessionId', validate(sessionIdValidator), authenticate, endSessionHandler)

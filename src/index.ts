@@ -3,6 +3,7 @@ import 'dotenv/config'
 import cookieParser from "cookie-parser"
 import * as useragent from "express-useragent"
 import { authRouter } from "./routes/auth.routes"
+import {sessionsRouter} from "./routes/sessions.routes"
 import { noteRouter } from "./routes/notes.routes"
 import { notFoundHandler } from './middlewares/notfound.middlewares'
 import { errorHandler } from "./middlewares/errorHandler.middlewares"
@@ -14,6 +15,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(useragent.express())
 app.use('/auth', authRouter)
+app.use('/sessions', sessionsRouter)
 app.use('/notes', noteRouter)
 app.use(notFoundHandler)
 app.use(errorHandler)

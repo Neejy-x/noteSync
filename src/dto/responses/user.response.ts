@@ -1,6 +1,7 @@
 export interface NoteResponse {
 title: string,
-content: string
+content: string,
+update_at: Date
 }
 
 export interface UserDTO {
