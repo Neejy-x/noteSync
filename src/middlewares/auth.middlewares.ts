@@ -33,3 +33,15 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     throw err
     }
 }
+
+
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+        return res.status(401).json({ Success: false, message: 'Unauthorized: user not authenticated' });
+    }
+    const { role } = req.user;
+    if (role !== 'admin') {
+        return res.status(403).json({ Success: false, message: `Unauthorized: ${role} not allowed` });
+    }
+    next();
+}
