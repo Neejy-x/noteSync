@@ -1,8 +1,18 @@
 import type { Request, Response } from 'express';
 import { NotesService } from '../services/notes.service';
 import type { NoteResponse } from '../dto/responses/user.response'
+import { catchAsync } from '../utils/catchAsync';
+import { Query } from '../dto/input/requests.input';
+import { DefaultResponse } from '../dto/responses/user.response';
 
-export const getAllNotes = async (req: Request, res: Response< {Success: boolean, message: string,data?: NoteResponse[]}>) => {
+
+
+export const getAllNotes = 
+    catchAsync(async (
+        req: Request<{}, {}, {}, Query>, 
+        res: Response< 
+           DefaultResponse
+        >) => {
     const {page} = req.query.page ? {page: Number(req.query.page)}: {page: 1}
     const {limit} = req.query.limit ? {limit: Number(req.query.limit)} : {limit: 10}
     if(!req.user) return res.status(401).json({Success: false, message: 'Unauthroized: user not authenticated'})
@@ -14,5 +24,10 @@ export const getAllNotes = async (req: Request, res: Response< {Success: boolean
         message: '',
         data: notes
     })
+})
 
-}
+export const getNoteById = catchAsync(async (req: Request<{noteId: string}>, res: Response<{}>){
+
+        const {noteId} = req.params
+
+})

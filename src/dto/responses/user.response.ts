@@ -10,3 +10,9 @@ export interface UserDTO {
     email: string,
     role?: string
 }
+
+export interface DefaultResponse{
+    Success: boolean;
+    message: string;
+    data?: {}
+}

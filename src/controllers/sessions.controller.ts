@@ -1,8 +1,9 @@
 import type {Request, Response} from 'express'
 import { AuthService } from '../services/auth.service'
+import { DefaultResponse } from '../dto/responses/user.response'
 
 
-export const getSessionsHandler = (req: Request, res: Response<{Success: boolean, message: string, data?: {} }>) => {
+export const getSessionsHandler = (req: Request, res: Response<DefaultResponse>) => {
      
     if(!req.user){
         return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
@@ -17,7 +18,7 @@ export const getSessionsHandler = (req: Request, res: Response<{Success: boolean
     })
 }
 
-export const endSessionHandler = async (req: Request, res: Response<{Success: boolean, message: string}>) => {
+export const endSessionHandler = async (req: Request, res: Response<DefaultResponse>) => {
     const sessionId = req.body
     if(!req.user){
         return res.status(403).json({Success: false, message: 'Unauthorized: user not validated'})

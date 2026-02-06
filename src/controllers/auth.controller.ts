@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
-import { UserDTO } from '../dto/responses/user.response';
+import { DefaultResponse, UserDTO } from '../dto/responses/user.response';
 import { loginInput, SignUpInput } from '../validators/auth.validators';
 import { catchAsync } from '../utils/catchAsync';
 import { success } from 'zod';
@@ -9,7 +9,7 @@ import { success } from 'zod';
 
 export const signUpHandler = catchAsync(async (
     req: Request<{}, {}, SignUpInput>,
-    res: Response<{Success: boolean, message: string, data: UserDTO, accessToken: string}>
+    res: Response<DefaultResponse & {accessToken: string}>
 ) => {
     const ua = req.useragent;
     const platform = ua?.isMobile ? 'Mobile' : ua?.isDesktop ? 'Desktop' : 'Tablet';
@@ -34,7 +34,7 @@ export const signUpHandler = catchAsync(async (
 
 export const loginHandler = catchAsync(async(
     req: Request<{}, {}, loginInput>, 
-    res:Response<{Success: boolean, message: string, data: UserDTO, accessToken: string}>
+    res:Response<DefaultResponse & {accessToken: string}>
 ) => {
     const ua = req.useragent
     const platform = ua?.isMobile ? 'Mobile' : ua?.isDesktop ? 'Desktop' : 'Tablet'
@@ -60,7 +60,11 @@ export const loginHandler = catchAsync(async(
 
 })
 
-export const logoutHandler = catchAsync(async(req:Request, res:Response<{Success: boolean, message: string}>) => {
+export const logoutHandler = 
+catchAsync(async(
+    req:Request, 
+    res:Response<DefaultResponse>
+) => {
     const cookies = req.cookies
     if(!cookies?.jwt){
         return res.status(204).json({Success: false, message: 'no token'})
@@ -78,7 +82,11 @@ export const logoutHandler = catchAsync(async(req:Request, res:Response<{Success
     })
 })
 
-export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<{Success: boolean, message: string, data?: UserDTO, accessToken?: string}>) => {
+export const refreshTokenHandler = 
+catchAsync(async(
+    req: Request, 
+    res: Response<DefaultResponse & {accessToken?: string}>
+) => {
     const ua = req.useragent
     const platform = ua?.isMobile ? 'Mobile' : ua?.isDesktop ? 'Desktop' : 'Tablet'
     const deviceName = `${ua?.browser} on ${ua?.os} (${platform})`
