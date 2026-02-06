@@ -4,7 +4,7 @@ import { pool } from '../db/pool';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { UserDTO } from '../dto/responses/user.response';
 import { loginInput } from '../validators/auth.validators';
-
+import client from '../config/redisClient';
 
 interface signupResponse {
     user: UserDTO;
@@ -17,7 +17,11 @@ const refreshSecret = String(process.env.JW_REFRESH_SECRET);
 
 export class AuthService {
 
-    static async signUp ({username, password, email}: {username: string; password: string; email: string}): Promise<signupResponse>{
+    static async signUp (
+        {username, password, email, deviceName, ip}:
+         {username: string; password: string; email: string; deviceName: string; ip: string | undefined}
+        ): Promise<signupResponse>{
+        
         const hashed_password = await bcrypt.hash(password, 12)
         const connection = await pool.getConnection()
         
@@ -48,11 +52,24 @@ export class AuthService {
             refreshSecret,
             {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as any}
         )
-        await connection.execute<ResultSetHeader>(
-            `INSERT INTO refresh_tokens (user_id, token)
-            VALUES(?, ?)`,
-            [user.user_id, refreshToken]
-        )
+
+        const sessionData = {
+            token: refreshToken,
+            deviceName,
+            ip,
+            createdAt: Date.now()
+        }
+
+        await client.multi()
+        .hSet(`sessions:${user.user_id}`, refreshToken, JSON.stringify(sessionData) )
+        .expire(`sessions:${user.user_id}`, 7 * 24 * 60 * 60)
+        .exec()
+        
+        // await connection.execute<ResultSetHeader>(
+        //     `INSERT INTO refresh_tokens (user_id, token)
+        //     VALUES(?, ?)`,
+        //     [user.user_id, refreshToken]
+        // )
 
         await connection.commit()
         return {user, accessToken, refreshToken}
@@ -64,7 +81,7 @@ export class AuthService {
     }
     }
 
-    static async login({username, password}: loginInput):Promise<signupResponse> {
+    static async login({username, password, deviceName, ip}: loginInput & { deviceName: string, ip: string | undefined }):Promise<signupResponse> {
         //Fetch user from DB
         const [rows] = await pool.execute<UserDTO[] & RowDataPacket[]>(
             `SELECT user_id, username, email, role, hashed_password
@@ -94,12 +111,24 @@ export class AuthService {
         const accessToken = jwt.sign({userId: user.user_id, role: user.role}, secret, {expiresIn: process.env.JWT_EXPIRES_IN as any})
         const refreshToken = jwt.sign({userId: user.user_id, role: user.role}, refreshSecret, {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as any})
 
+        const sessionData = {
+            token: refreshToken,
+            deviceName,
+            ip,
+            createdAt: Date.now()
+        }
+
         //insert token into db
-        await pool.execute<ResultSetHeader>(
-            `INSERT INTO refresh_tokens(user_id, token)
-            VALUES (?, ?)`,
-            [user.user_id, refreshToken]
-        )
+        await client.multi()
+        .hSet(`sessions:${user.user_id}`, refreshToken, JSON.stringify(sessionData))
+        .expire(`sessions:${user.user_id}`, 7 * 24 * 60 * 60)
+        .exec()
+
+        // await pool.execute<ResultSetHeader>(
+        //     `INSERT INTO refresh_tokens(user_id, token)
+        //     VALUES (?, ?)`,
+        //     [user.user_id, refreshToken]
+        // )
 
         return{ user, accessToken, refreshToken}
     
@@ -109,17 +138,19 @@ export class AuthService {
         try{
 
         const decoded = jwt.verify(refreshToken, refreshSecret) as {userId: string, role: string}
-        const [result] = await pool.execute<ResultSetHeader>(
-            `DELETE FROM refresh_tokens WHERE token = ? AND user_id = ?`,
-            [ refreshToken,decoded.userId]
-        )
-        return result.affectedRows > 0
+
+        return await client.hDel(`sessions:${decoded.userId}`, refreshToken)
+        // const [result] = await pool.execute<ResultSetHeader>(
+        //     `DELETE FROM refresh_tokens WHERE token = ? AND user_id = ?`,
+        //     [ refreshToken,decoded.userId]
+        // )
+        // return result.affectedRows > 0
     }catch(err){
         return false
     }
     }
     
-   static async token(oldToken: string): Promise<signupResponse>{
+   static async token({oldToken, deviceName, ip}: {oldToken:string, deviceName: string, ip: string | undefined}): Promise<signupResponse>{
     const connection = await pool.getConnection()
 
     try{
@@ -138,33 +169,64 @@ export class AuthService {
             throw err
         }
 
-        const [result] = await connection.execute<ResultSetHeader>(
-            `DELETE FROM refresh_tokens
-            WHERE user_id = ? AND token = ? `,
-            [user.user_id, oldToken]
-        )
-
-        if (result.affectedRows != 1 ){
-            await connection.execute(
-                `DELETE FROM refresh_tokens
-                WHERE user_id = ?`,
-                [user.user_id]
-            )
-            await connection.commit()
-            const err = new Error('Invalid refreshToken') as Error & {statusCode: number}
+        const sessionExists = await client.hExists(`sessions:${user.user_id}`, oldToken)
+        if(!sessionExists){
+            await client.del(`sessions:${user.user_id}`)
+            const err = new Error('Invalid token') as Error & {statusCode: number}
             err.statusCode = 403
             throw err
         }
 
         const accessToken = jwt.sign({userId: user.user_id, role: user.role}, secret, {expiresIn: process.env.JWT_EXPIRES_IN as any})
-        const refreshToken = jwt.sign({userId: user.user_id, role: user.role}, refreshSecret, {expiresIn: process.env.JWT_REFRSH_EXPIRES_IN as any})
+        const refreshToken = jwt.sign({userId: user.user_id, role: user.role}, refreshSecret, {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as any})
+
+        const sessionData = {
+            token: refreshToken,
+            deviceName,
+            ip,
+            createdAt: Date.now()
+        }
+
+        const results = await client.multi()
+        .hDel(`sessions:${user.user_id}`, oldToken)
+        .hSet(`sessions:${user.user_id}`, refreshToken, JSON.stringify(sessionData))
+        .expire(`sessions:${user.user_id}`, 7 * 24 * 60 * 60)
+        .exec()
+
+
+         results.forEach((res, i) => {
+        if (res instanceof Error) {
+            console.error(`Redis command ${i} failed`, res)
+            throw res
+        }
+        })
+
+        // // const [result] = await connection.execute<ResultSetHeader>(
+        // //     `DELETE FROM refresh_tokens
+        // //     WHERE user_id = ? AND token = ? `,
+        // //     [user.user_id, oldToken]
+        // // )
+
+        // if (result.affectedRows != 1 ){
+        //     await connection.execute(
+        //         `DELETE FROM refresh_tokens
+        //         WHERE user_id = ?`,
+        //         [user.user_id]
+        //     )
+        //     await connection.commit()
+        //     const err = new Error('Invalid refreshToken') as Error & {statusCode: number}
+        //     err.statusCode = 403
+        //     throw err
+        // }
+
 
         //add new refreshTpoken to database
-        await connection.execute(
-            `INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)`,
-            [user.user_id, refreshToken]
-        );
+        // await connection.execute(
+        //     `INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)`,
+        //     [user.user_id, refreshToken]
+        // );
         
+
         await connection.commit()
         return {accessToken, refreshToken, user}
     }catch(err){

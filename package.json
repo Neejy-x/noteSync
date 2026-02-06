@@ -26,6 +26,7 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-useragent": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.16.2",
     "redis": "^5.10.0",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
+    "@types/express-useragent": "^1.0.5",
     "@types/jsonwebtoken": "^9.0.10",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"

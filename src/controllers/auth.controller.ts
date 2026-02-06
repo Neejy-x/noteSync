@@ -11,8 +11,12 @@ export const signUpHandler = catchAsync(async (
     req: Request<{}, {}, SignUpInput>,
     res: Response<{Success: boolean, message: string, data: UserDTO, accessToken: string}>
 ) => {
+    const ua = req.useragent;
+    const platform = ua?.isMobile ? 'Mobile' : ua?.isDesktop ? 'Desktop' : 'Tablet';
+    const deviceName = `${ua?.browser} on ${ua?.os} (${platform})`
+    const ip =  req.ip || req.socket.remoteAddress
     const {username, password, email} = req.body;
-    const {user, accessToken, refreshToken} = await AuthService.signUp({username, password, email})
+    const {user, accessToken, refreshToken} = await AuthService.signUp({username, password, email, deviceName, ip})
     res.cookie('jwt', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -32,8 +36,12 @@ export const loginHandler = catchAsync(async(
     req: Request<{}, {}, loginInput>, 
     res:Response<{Success: boolean, message: string, data: UserDTO, accessToken: string}>
 ) => {
+    const ua = req.useragent
+    const platform = ua?.isMobile ? 'Mobile' : ua?.isDesktop ? 'Desktop' : 'Tablet'
+    const deviceName = `${ua?.browser} on ${ua?.os} (${platform})`
+    const ip = req.ip || req.socket.remoteAddress
     const {username, password} = req.body
-    const {user, accessToken, refreshToken} = await AuthService.login({username, password})
+    const {user, accessToken, refreshToken} = await AuthService.login({username, password, deviceName, ip})
 
     res.cookie('jwt', refreshToken,
         {
@@ -71,6 +79,10 @@ export const logoutHandler = catchAsync(async(req:Request, res:Response<{Success
 })
 
 export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<{Success: boolean, message: string, data?: UserDTO, accessToken?: string}>) => {
+    const ua = req.useragent
+    const platform = ua?.isMobile ? 'Mobile' : ua?.isDesktop ? 'Desktop' : 'Tablet'
+    const deviceName = `${ua?.browser} on ${ua?.os} (${platform})`
+    const ip = req.ip || req.socket.remoteAddress
     const cookies = req. cookies
     if(!cookies?.jwt){
         return res.status(204).json({Success: false, message: 'no token'})
@@ -79,7 +91,7 @@ export const refreshTokenHandler = catchAsync(async(req: Request, res: Response<
     const oldToken = cookies.jwt
     try{
     
-    const {accessToken, refreshToken, user} = await AuthService.token(oldToken)
+    const {accessToken, refreshToken, user} = await AuthService.token({oldToken, deviceName, ip})
     res.cookie(
         'jwt', refreshToken,
         {   
