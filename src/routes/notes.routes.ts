@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllNotes, getNoteById, createNoteHandler} from '../controllers/notes.controller'
+import { getAllNotes, getNoteById, createNoteHandler, updateNoteHandler} from '../controllers/notes.controller'
 import {authenticate} from '../middlewares/auth.middlewares'
 
 export const noteRouter = express.Router();

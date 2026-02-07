@@ -70,5 +70,9 @@ export const updateNoteHandler = catchAsync(
     ) => {
 
         const {title, content} = req.body
-        const user_id = req.user
+        if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
+        const user_id = req.user.user_id
+        const {noteId} = req.params
+        
+        const note = await NotesService.updateNote({user_id, title, content, noteId})
 })

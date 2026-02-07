@@ -114,5 +114,14 @@ export class NotesService {
         
         return note
 
-    }}
+    }
+
+
+
+    static async updateNote({user_id, title, content, noteId}: {user_id: string, content:string, title: string, noteId: string}):Promise<{noteId: string} & NoteResponse>{
+
+    }
+
+
+}
        
