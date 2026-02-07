@@ -39,6 +39,10 @@ export const getNoteById = catchAsync(async (req: Request<{noteId: string}>, res
 
 })
 
-export const createNoteHandler = catchAsync(async(req: Request, res: Response<DefaultResponse & NoteResponse>)=> {
+export const createNoteHandler = catchAsync(async(req: Request<{}, {}, {title: string, content: string}, {}>, res: Response<DefaultResponse & {data?:NoteResponse}>)=> {
+    const {title, content} = req.body
+    if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
+    const {user_id} = req.user
+    const note = await NotesService.createNote({user_id, title, content})
 
 })

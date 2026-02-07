@@ -89,5 +89,11 @@ export class NotesService {
         return note
     }
 
+
+
+    static async createNote({user_id, title, content}: {user_id: string, title: string, content: string}){
+
+    }
+
     }
        
