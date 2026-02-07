@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
 import { NotesService } from '../services/notes.service';
-import type { NoteResponse } from '../dto/responses/user.response'
+import type { NoteResponse } from '../dto/responses/global.response'
 import { catchAsync } from '../utils/catchAsync';
-import { Query } from '../dto/input/requests.input';
-import { DefaultResponse } from '../dto/responses/user.response';
+import { Query } from '../dto/input/global.input';
+import { DefaultResponse } from '../dto/responses/global.response';
 
 
 
@@ -36,5 +36,9 @@ export const getNoteById = catchAsync(async (req: Request<{noteId: string}>, res
         if(!note) return res.status(404).json({Success: false, message: 'Note not found'})
         
         res.status(200).json({Success: true, message: '', data: note})
+
+})
+
+export const createNoteHandler = catchAsync(async(req: Request, res: Response<DefaultResponse & NoteResponse>)=> {
 
 })

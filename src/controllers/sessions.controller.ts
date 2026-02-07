@@ -1,6 +1,6 @@
 import type {Request, Response} from 'express'
 import { AuthService } from '../services/auth.service'
-import { DefaultResponse } from '../dto/responses/user.response'
+import { DefaultResponse } from '../dto/responses/global.response'
 
 
 export const getSessionsHandler = (req: Request, res: Response<DefaultResponse>) => {

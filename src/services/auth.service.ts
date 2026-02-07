@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import { pool } from '../db/pool';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { UserDTO } from '../dto/responses/user.response';
+import { UserDTO } from '../dto/responses/global.response';
 import { loginInput } from '../validators/auth.validators';
 import client from '../config/redisClient';
 import { nanoid } from 'nanoid';

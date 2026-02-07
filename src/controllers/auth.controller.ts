@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
-import { DefaultResponse, UserDTO } from '../dto/responses/user.response';
+import { DefaultResponse, UserDTO } from '../dto/responses/global.response';
 import { loginInput, SignUpInput } from '../validators/auth.validators';
 import { catchAsync } from '../utils/catchAsync';
 import { success } from 'zod';

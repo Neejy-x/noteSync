@@ -1,6 +1,6 @@
 import {pool} from  '../db/pool';
 import type { RowDataPacket} from 'mysql2/promise'
-import { NoteResponse } from '../dto/responses/user.response.js';
+import { NoteResponse } from '../dto/responses/global.response.js';
 import client from '../config/redisClient';
 
 
