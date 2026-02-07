@@ -2,16 +2,7 @@ import type {Request, Response, NextFunction} from 'express'
 import jwt from 'jsonwebtoken'
 
 // Extend Express Request interface to include 'user'
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        user_id: string;
-        role: string;
-      };
-    }
-  }
-}
+
 
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {

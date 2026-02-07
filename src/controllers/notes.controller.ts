@@ -1,9 +1,10 @@
-import type { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { NotesService } from '../services/notes.service';
 import type { NoteResponse } from '../dto/responses/global.response'
 import { catchAsync } from '../utils/catchAsync';
 import { Query } from '../dto/input/global.input';
 import { DefaultResponse } from '../dto/responses/global.response';
+import { CreateNoteInput } from '../dto/input/notes.create';
 
 
 
@@ -26,7 +27,11 @@ export const getAllNotes =
     })
 })
 
-export const getNoteById = catchAsync(async (req: Request<{noteId: string}>, res: Response<{}>)=>{
+export const getNoteById = catchAsync(
+    async (
+        req: Request<{noteId: string}>, 
+        res: Response<DefaultResponse & {data?: NoteResponse}>
+    )=>{
 
         const {noteId} = req.params
         if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
@@ -39,10 +44,31 @@ export const getNoteById = catchAsync(async (req: Request<{noteId: string}>, res
 
 })
 
-export const createNoteHandler = catchAsync(async(req: Request<{}, {}, {title: string, content: string}, {}>, res: Response<DefaultResponse & {data?:NoteResponse}>)=> {
+export const createNoteHandler = catchAsync(
+    async(
+        req: Request<{}, {}, CreateNoteInput, {}>, 
+        res: Response<DefaultResponse & {data?:NoteResponse}>
+    )=> {
     const {title, content} = req.body
     if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
     const {user_id} = req.user
     const note = await NotesService.createNote({user_id, title, content})
 
+    res.status(201).json({
+        Success: true,
+        message: 'Note saved',
+        data: note
+    })
+
+})
+
+
+export const updateNoteHandler = catchAsync(
+    async(
+        req:Request<{noteId: string}, {},CreateNoteInput>, 
+        res: Response<DefaultResponse & {data?: NoteResponse}>
+    ) => {
+
+        const {title, content} = req.body
+        const user_id = req.user
 })

@@ -1,7 +1,8 @@
 import {pool} from  '../db/pool';
-import type { RowDataPacket} from 'mysql2/promise'
+import type { ResultSetHeader, RowDataPacket} from 'mysql2/promise'
 import { NoteResponse } from '../dto/responses/global.response.js';
 import client from '../config/redisClient';
+import { CreateNoteInput } from '../dto/input/notes.create';
 
 
 type NoteRow = NoteResponse & RowDataPacket
@@ -91,9 +92,27 @@ export class NotesService {
 
 
 
-    static async createNote({user_id, title, content}: {user_id: string, title: string, content: string}){
+    static async createNote({user_id, title, content}: {user_id: string, title: string, content: string}):Promise<{note_id: number} & NoteResponse>{
 
-    }
+        const [results] = await pool.execute<ResultSetHeader>(
+            `INSERT INTO notes(owner_id, title, content)
+            VALUES(?, ?, ?)`,
+            [user_id, title, content]
+        )
 
-    }
+        if(results.affectedRows === 0){
+            const err = new Error('Error saving note') as Error & {statusCode: number}
+            err.statusCode = 401
+            throw err
+        }
+
+        const note = {
+            note_id: results.insertId,
+            title,
+            content
+        }
+        
+        return note
+
+    }}
        
