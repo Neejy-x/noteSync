@@ -21,8 +21,8 @@ FOREIGN KEY fk_note_owner  (owner_id)
 CREATE TABLE IF NOT EXISTS contributions(
 user_id CHAR(36) NOT NULL,
 note_id CHAR(36) NOT NULL,
-permisson ENUM('viewer', 'editor') DEFAULT 'editor',
-status ENUM('pending', 'accepted', 'declined'),
+permisson ENUM('VIEWER', 'EDITOR') DEFAULT 'EDITOR',
+status ENUM('PENDING', 'ACCEPTED', 'DECLINED') DEFAULT 'PENDING',
 PRIMARY KEY(user_id, note_id),
 FOREIGN KEY fk_contribution_note(note_id) REFERENCES notes(note_id) ON DELETE CASCADE,
 FOREIGN KEY fk_contributions_user(user_id) REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE

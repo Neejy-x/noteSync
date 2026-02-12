@@ -32,3 +32,4 @@ export const endSessionHandler = async (req: Request, res: Response<DefaultRespo
             message: 'Session terminated'
         })
 }
+

@@ -4,12 +4,11 @@ import type { NoteResponse } from '../dto/responses/global.response'
 import { catchAsync } from '../utils/catchAsync';
 import { Query } from '../dto/input/global.input';
 import { DefaultResponse } from '../dto/responses/global.response';
-import { CreateNoteInput } from '../dto/input/notes.create';
+import { NoteInput } from '../dto/input/notes.create';
 
 
 
-export const getAllNotes = 
-    catchAsync(async (
+export const getAllNotes = catchAsync(async (
         req: Request<{}, {}, {}, Query>, 
         res: Response< 
            DefaultResponse
@@ -46,7 +45,7 @@ export const getNoteById = catchAsync(
 
 export const createNoteHandler = catchAsync(
     async(
-        req: Request<{}, {}, CreateNoteInput, {}>, 
+        req: Request<{}, {}, NoteInput, {}>, 
         res: Response<DefaultResponse & {data?:NoteResponse}>
     )=> {
     const {title, content} = req.body
@@ -65,7 +64,7 @@ export const createNoteHandler = catchAsync(
 
 export const updateNoteHandler = catchAsync(
     async(
-        req:Request<{noteId: string}, {},CreateNoteInput>, 
+        req:Request<{noteId: string}, {},NoteInput>, 
         res: Response<DefaultResponse & {data?: NoteResponse}>
     ) => {
 
@@ -73,6 +72,22 @@ export const updateNoteHandler = catchAsync(
         if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
         const user_id = req.user.user_id
         const {noteId} = req.params
-        
+        // const accessLevel = await NotesService.checkAccessLevel({user_id, noteId})
+        // if(accessLevel === 'NONE') return res.status(404).json({Success: false, message: 'Note not found'}) 
+        // if(accessLevel === 'VIEWER') return res.status(403).json({Success: false, message: 'You are not allowed to edit this note'})
         const note = await NotesService.updateNote({user_id, title, content, noteId})
+        res.status(200).json({
+            Success: true,
+            message: 'Note Updated',
+            data: note
+        })
+})
+
+export const deleteNoteHandler = catchAsync(
+    async(
+        req: Request<{noteId: string}>,
+         res: Response<DefaultResponse>
+    ) => {
+    const {noteId} = req.params
+    await NotesService.deleteNote(noteId)
 })

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllNotes, getNoteById, createNoteHandler, updateNoteHandler} from '../controllers/notes.controller'
+import { getAllNotes, getNoteById, createNoteHandler, updateNoteHandler, deleteNoteHandler} from '../controllers/notes.controller'
 import {authenticate} from '../middlewares/auth.middlewares'
 
 export const noteRouter = express.Router();
@@ -11,3 +11,4 @@ noteRouter.get('/', getAllNotes)
 noteRouter.get('/:noteId', getNoteById)
 noteRouter.post('/', createNoteHandler)
 noteRouter.patch('/:noteId', updateNoteHandler)
+noteRouter.delete('/:noteId', deleteNoteHandler)

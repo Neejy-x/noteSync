@@ -95,9 +95,9 @@ export class NotesService {
     static async createNote({user_id, title, content}: {user_id: string, title: string, content: string}):Promise<{note_id: number} & NoteResponse>{
 
         const [results] = await pool.execute<ResultSetHeader>(
-            `INSERT INTO notes(owner_id, title, content)
+            `INSERT INTO notes(owner_id, title, content, last_edited_by)
             VALUES(?, ?, ?)`,
-            [user_id, title, content]
+            [user_id, title, content, user_id]
         )
 
         if(results.affectedRows === 0){
@@ -118,10 +118,64 @@ export class NotesService {
 
 
 
-    static async updateNote({user_id, title, content, noteId}: {user_id: string, content:string, title: string, noteId: string}):Promise<{noteId: string} & NoteResponse>{
+    // static async checkAccessLevel({user_id, noteId}: {user_id: string, noteId: string}){
+    //     const [rows] = await pool.execute<NoteRow[]>(
+    //         `SELECT
+    //             CASE
+    //                 WHEN owner_id = ? THEN 'OWNER'
+    //                 WHEN EXISTS (
+    //                     SELECT 1 FROM contributions
+    //                     WHERE user_id = ? AND note_id = ? AND STATUS = 'ACCEPTED' 
+    //                     ) THEN (
+    //                         SELECT permission FROM contributions
+    //                         WHERE note_id = ? AND user_id = ? )
+    //                         ELSE 'NONE'
+    //                 END AS accessLevel
+    //                 FROM notes
+    //                 WHERE note_id = ?`,
+    //                 [user_id, user_id, noteId, noteId, user_id]
+    //     )
+    //      return rows.length > 0 ? rows[0].accessLevel : 'NONE';
+    // }
 
+    static async updateNote({user_id, title, content, noteId}: {user_id: string, content:string, title: string, noteId: string}):Promise<{note_id: string, last_edited_by: string} & NoteResponse>{
+
+    
+        const [result] = await pool.execute<ResultSetHeader>(
+            `UPDATE notes
+            SET 
+                title = ?,
+                content = ?,
+                updated_at = NOW(),
+                last_edited_by = ?
+            WHERE note_id = ?
+            AND (owner_id = ?
+            OR EXISTS(
+                        SELECT 1 FROM contributions
+                        WHERE user_id = ? AND note_id = ? 
+                        AND status = 'ACCEPTED'
+                        AND permission = 'EDITOR'
+                    )
+                )`,
+                [title, content, user_id, noteId, user_id, user_id, noteId]
+        )
+
+        if(result.affectedRows === 0){
+           const err = new Error('Note not found') as Error & {statusCode: number}
+           err.statusCode = 404
+           throw err
+        }
+
+        return {
+            note_id: noteId,
+            title,
+            content,
+            last_edited_by: user_id
+        }
     }
 
+
+    
 
 }
        
