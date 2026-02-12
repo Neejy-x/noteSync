@@ -8,7 +8,7 @@ type NoteRow = RowDataPacket & NoteResponse
 
 export class contributionsService {
     static async sendInvite({user_id, noteId, username, permission} : {user_id: string, noteId: string, permission: string, username: string}):Promise<boolean>{
-
+        try{
        const [rows] =  await pool.execute<NoteRow[]>(
             `SELECT user_id
             FROM users
@@ -22,12 +22,21 @@ export class contributionsService {
             throw err
         }
         const inviteeId = rows[0].user_id
+        if(inviteeId === user_id){
+            const err = new Error('You cannot invite yourself') as Error & {statusCode: number}
+            err.statusCode = 400
+            throw err
+        }
         const [result] = await pool.execute<ResultSetHeader>(
-            `INSERT INTO contributions(note_id, user_id, permission)
-            SELECT ?, ?, ?
+            `INSERT INTO contributions(note_id, user_id, permission, status)
+            SELECT ?, ?, ?, 'PENDING'
             FROM notes
-            WHERE user_id = ? AND note_id = ?`,
-            [noteId, inviteeId, permission, noteId, user_id, noteId]
+            WHERE owner_id = ? AND note_id = ?
+            ON DUPLICATE KEY UPDATE
+                permission = VALUES(permission)
+                status = 'PENDING
+                `,
+            [noteId, inviteeId, permission, user_id, noteId]
         )
 
         if(result.affectedRows != 1 ){
@@ -37,5 +46,13 @@ export class contributionsService {
         }
 
         return true
+    }catch(err: any){
+        if (err.code === 'ER_DUP_ENTRY') {
+            const err = new Error('User already invited to this note') as Error & { statusCode: number }
+            err.statusCode = 409
+            throw err
     }
+    throw err
+    }
+}
 }
