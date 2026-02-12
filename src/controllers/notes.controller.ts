@@ -103,7 +103,7 @@ export const searchNotesHandler =
     catchAsync(
     async(
         req:Request<{}, {}, SearchQueryInput, Query>, 
-        res: Response<DefaultResponse & {page: number}>
+        res: Response<DefaultResponse & {page?: number}>
     ) => {
         const page = req.query.page ? Number(req.query.page) : 1
         const limit = req.query.limit ? Number(req.query.limit) : 50

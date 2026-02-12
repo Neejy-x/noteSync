@@ -3,7 +3,6 @@ import type { ResultSetHeader, RowDataPacket} from 'mysql2/promise'
 import { NoteResponse } from '../dto/responses/global.response.js';
 import client from '../config/redisClient';
 
-
 type NoteRow = NoteResponse & RowDataPacket
 
 export class NotesService {
