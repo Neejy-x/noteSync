@@ -102,12 +102,14 @@ export const deleteNoteHandler = catchAsync(
 export const searchNotesHandler =  
     catchAsync(
     async(
-        req:Request<{}, {}, SearchQueryInput>, 
+        req:Request<{}, {}, SearchQueryInput, Query>, 
         res: Response<DefaultResponse>
     ) => {
+        const page = req.query.page ? Number(req.query.page) : 1
+        const limit = req.query.limit ? Number(req.query.limit) : 50
         const {searchQuery} = req.body
         if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
         const{user_id} = req.user
         
-        const results = await NotesService.searchNotes({user_id, searchQuery})
+        const results = await NotesService.searchNotes({user_id, searchQuery, page, limit})
     })

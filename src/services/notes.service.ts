@@ -192,10 +192,24 @@ export class NotesService {
         return true
     }
 
-    static async searchNotes({user_id, searchQuery}: {user_id:string, searchQuery: string}): Promise<NoteResponse[]>{
-        const [rows] = await pool.execute<NoteRow>(
-            ``
+    static async searchNotes({user_id, searchQuery, limit, page}: {user_id:string, searchQuery: string, limit:number, page: number}): Promise<NoteResponse[]>{
+
+        const offset = (page - 1) * limit
+        const [rows] = await pool.execute<NoteRow[]>(
+            `SELECT DISTINCT n.note_id, n.title, n.content, last_updated_by,
+                MATCH(n.title, n.content) AGAINST (? IN BOOLEAN MODE) AS relevance
+            FROM notes n
+            LEFT JOIN contributions c ON n.note_id = c.note_id AND c.user_id = ?
+            WHERE (n.owner_id = ? OR c.status = 'ACCEPTED') AND MATCH(n.title, n.content) AGAINST(? IN BOOLEAN MODE)
+            ORDER BY relevance
+            LIMIT ?, ?
+            `,
+            [searchQuery, user_id, user_id, searchQuery, limit, offset]
         )
+        
+        if(rows.length === 0) return []
+        return rows
+
     }
     
 }
