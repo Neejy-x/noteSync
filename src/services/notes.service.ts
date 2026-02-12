@@ -7,6 +7,8 @@ import client from '../config/redisClient';
 type NoteRow = NoteResponse & RowDataPacket
 
 export class NotesService {
+
+
     static async getAllNotes(
     {user_id, page, limit}: {user_id: string, page: number, limit: number}
 ): Promise<NoteResponse[]> {
@@ -95,7 +97,7 @@ export class NotesService {
 
         const [results] = await pool.execute<ResultSetHeader>(
             `INSERT INTO notes(owner_id, title, content, last_edited_by)
-            VALUES(?, ?, ?)`,
+            VALUES(?, ?, ?, ?)`,
             [user_id, title, content, user_id]
         )
 
@@ -187,9 +189,14 @@ export class NotesService {
             err.statusCode = 404
             throw err
         }
-
         return true
     }
 
+    static async searchNotes({user_id, searchQuery}: {user_id:string, searchQuery: string}): Promise<NoteResponse[]>{
+        const [rows] = await pool.execute<NoteRow>(
+            ``
+        )
+    }
+    
 }
        

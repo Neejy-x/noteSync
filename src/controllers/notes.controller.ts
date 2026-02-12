@@ -4,7 +4,7 @@ import type { NoteResponse } from '../dto/responses/global.response'
 import { catchAsync } from '../utils/catchAsync';
 import { Query } from '../dto/input/global.input';
 import { DefaultResponse } from '../dto/responses/global.response';
-import { NoteInput } from '../dto/input/notes.create';
+import { NoteInput, SearchQueryInput } from '../dto/input/notes.create';
 
 
 
@@ -97,3 +97,17 @@ export const deleteNoteHandler = catchAsync(
         message: 'Note deleted'
     })
 })
+
+
+export const searchNotesHandler =  
+    catchAsync(
+    async(
+        req:Request<{}, {}, SearchQueryInput>, 
+        res: Response<DefaultResponse>
+    ) => {
+        const {searchQuery} = req.body
+        if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
+        const{user_id} = req.user
+        
+        const results = await NotesService.searchNotes({user_id, searchQuery})
+    })

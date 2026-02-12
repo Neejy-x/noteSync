@@ -5,3 +5,7 @@ export const createNoteSchema = z.object({
     content: z.string()
 })
 
+export const searchQuerySchema = z.object({
+    searchQuery: z.string()
+})
+
