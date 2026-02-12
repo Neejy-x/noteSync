@@ -89,5 +89,11 @@ export const deleteNoteHandler = catchAsync(
          res: Response<DefaultResponse>
     ) => {
     const {noteId} = req.params
-    await NotesService.deleteNote(noteId)
+    if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user not authenticated'})
+    const user_id = req.user.user_id
+    await NotesService.deleteNote({user_id, noteId})
+    res.status(200).json({
+        Success: true,
+        message: 'Note deleted'
+    })
 })

@@ -2,7 +2,6 @@ import {pool} from  '../db/pool';
 import type { ResultSetHeader, RowDataPacket} from 'mysql2/promise'
 import { NoteResponse } from '../dto/responses/global.response.js';
 import client from '../config/redisClient';
-import { CreateNoteInput } from '../dto/input/notes.create';
 
 
 type NoteRow = NoteResponse & RowDataPacket
@@ -175,7 +174,22 @@ export class NotesService {
     }
 
 
-    
+    static async deleteNote({user_id, noteId}: {user_id: string, noteId: string}): Promise<boolean>{
+
+        const [result] = await pool.execute<ResultSetHeader>(
+            `DELETE FROM notes
+            WHERE note_id = ? AND owner_id = ?`,
+            [noteId, user_id]
+        )
+
+        if(result.affectedRows == 0){
+            const err = new Error('Note Not found') as Error & {statusCode: number}
+            err.statusCode = 404
+            throw err
+        }
+
+        return true
+    }
 
 }
        
