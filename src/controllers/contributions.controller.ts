@@ -58,8 +58,12 @@ export const acceptContributionsInviteHandler = catchAsync(async(req: Request<ac
 })
 
 export const declineContributionsInviteHandler = catchAsync(async(req: Request<declineContributionsInviteInput['params']>, res: Response<DefaultResponse>) => {
-    if(!req.user) return res.status(401).json({Success: false, message: 'Unaithorised: user not authenticated'})
+    if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorised: user not authenticated'})
     const user_id = req.user.user_id
     const noteId = req.params.noteId
     await contributionsService.declineInvite({user_id, noteId})
+    res.status(201).json({
+        Success: true,
+        message: 'Contribution Invite declined'
+    })
 })
