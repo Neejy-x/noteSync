@@ -8,4 +8,4 @@ import { validate } from '../middlewares/validator.middleware'
 export const sessionsRouter: Router = express.Router()
 
 sessionsRouter.get('/', authenticate, getSessionsHandler)
-sessionsRouter.post('/end/:sessionId', validate(getSessionByIdSchema), authenticate, endSessionHandler)
+sessionsRouter.post('/:sessionId/end', validate(getSessionByIdSchema), authenticate, endSessionHandler)
