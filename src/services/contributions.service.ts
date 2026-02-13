@@ -74,5 +74,25 @@ export class contributionsService {
         
 }
 
+
+static async acceptInvite({user_id, noteId}: {user_id: string, noteId: string}):Promise<void>{
+    const [result] = await pool.execute<ResultSetHeader>(
+        `UPDATE contributions
+        SET status = 'ACCEPTED
+        WHERE note_id = ?
+        AND user_id = ?
+        AND status = 'PENDING'`,
+        [noteId, user_id]
+    )
+
+    if(result.affectedRows === 0){
+        const err = new Error('Note already handled or not found') as Error & {statusCode: number}
+        err.statusCode = 409
+        throw err
+    }
+
+    return
+}
+
 }
 
