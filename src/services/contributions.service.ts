@@ -94,5 +94,23 @@ static async acceptInvite({user_id, noteId}: {user_id: string, noteId: string}):
     return
 }
 
+static async declineInvite({user_id, noteId}: {user_id: string, noteId: string}): Promise<void>{
+    const [results] = await pool.execute<ResultSetHeader>(
+        `UPDATE contributions
+        SET status = 'DECLINED
+        WHERE note_id = ?
+        AND user_id = ?
+        AND status = 'PENDING'`,
+        [noteId, user_id]
+    )
+
+    if(results.affectedRows == 0 ){
+        const err = new Error('Note already handled or Not found') as Error & {statusCode: number} 
+        err.statusCode = 409
+        throw err
+    }
+    return 
+}
+
 }
 

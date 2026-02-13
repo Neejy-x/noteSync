@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { catchAsync } from "../utils/catchAsync";
 import { contributionsService } from "../services/contributions.service";
-import { acceptContributionsInput, contributionsInviteType, getContributionsInvitesInput } from "../dto/input/contributions.input";
+import { acceptContributionsInviteInput, contributionsInviteType, declineContributionsInviteInput, getContributionsInvitesInput } from "../dto/input/contributions.input";
 import { DefaultResponse } from "../dto/responses/global.response";
 
 
@@ -45,7 +45,7 @@ export const getContributionsInvitesHandler = catchAsync(
 })
 
 
-export const acceptContributionsHandler = catchAsync(async(req: Request<acceptContributionsInput['params']>, res: Response<DefaultResponse>) => {
+export const acceptContributionsInviteHandler = catchAsync(async(req: Request<acceptContributionsInviteInput['params']>, res: Response<DefaultResponse>) => {
 
     if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user is unauthenticated'})
     const noteId = req.params.noteId
@@ -55,4 +55,11 @@ export const acceptContributionsHandler = catchAsync(async(req: Request<acceptCo
         Success: true,
         message: 'Contribution invite accepted'
     })
+})
+
+export const declineContributionsInviteHandler = catchAsync(async(req: Request<declineContributionsInviteInput['params']>, res: Response<DefaultResponse>) => {
+    if(!req.user) return res.status(401).json({Success: false, message: 'Unaithorised: user not authenticated'})
+    const user_id = req.user.user_id
+    const noteId = req.params.noteId
+    await contributionsService.declineInvite({user_id, noteId})
 })

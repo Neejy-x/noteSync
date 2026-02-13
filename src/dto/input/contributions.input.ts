@@ -5,6 +5,6 @@ export type contributionsInviteType = z.infer<typeof postContributionInviteSchem
 
 export type getContributionsInvitesInput = z.infer<typeof getContributionsInvitesSchema>
 
-export type acceptContributionsInput = z.infer<typeof acceptContributionSchema>
+export type acceptContributionsInviteInput = z.infer<typeof acceptContributionSchema>
 
-export type declineContributionsInput = z.infer<typeof declineContributionsSchema>
+export type declineContributionsInviteInput = z.infer<typeof declineContributionsSchema>
