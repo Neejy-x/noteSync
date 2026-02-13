@@ -1,20 +1,21 @@
 import { ZodSchema, ZodError } from "zod";
 import { Request, Response, NextFunction } from "express";
-import { AnyZodObject } from "zod/v3";
 
 
-export const validate = (schema: AnyZodObject) => (req: Request, res: Response, next: NextFunction) => {
+export const validate = (schema: ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
     
     const result = schema.safeParse({
         body: req.body,
         params: req.params,
         query: req.query
     })
-    if(!result.success){
-        return next(result.error)
-    }
-    req.body = result.data.body
-    req.params = result.data.params
-    req.query = result.data.query
+   if (!result.success) {
+  const error = new ZodError(result.error.issues)
+  return next(error)
+}
+    const { body, params, query } = result.data as { body: any; params: any; query: any };
+    req.body = body
+    req.params = params
+    req.query = query
     return next()
 }

@@ -89,7 +89,7 @@ export class AuthService {
 
 
 
-    static async login({username, password, deviceName, ip}: loginInput & { deviceName: string, ip: string | undefined }):Promise<signupResponse> {
+    static async login({username, password, deviceName, ip}: loginInput['body'] & { deviceName: string, ip: string | undefined }):Promise<signupResponse> {
         //Fetch user from DB
         const [rows] = await pool.execute<UserDTO[] & RowDataPacket[]>(
             `SELECT user_id, username, email, role, hashed_password

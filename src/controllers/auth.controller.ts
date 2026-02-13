@@ -3,12 +3,11 @@ import { AuthService } from '../services/auth.service';
 import { DefaultResponse, UserDTO } from '../dto/responses/global.response';
 import { loginInput, SignUpInput } from '../validators/auth.validators';
 import { catchAsync } from '../utils/catchAsync';
-import { success } from 'zod';
 
 
 
 export const signUpHandler = catchAsync(async (
-    req: Request<{}, {}, SignUpInput>,
+    req: Request<{}, {}, SignUpInput['body']>,
     res: Response<DefaultResponse & {accessToken: string}>
 ) => {
     const ua = req.useragent;
@@ -33,14 +32,15 @@ export const signUpHandler = catchAsync(async (
 })
 
 export const loginHandler = catchAsync(async(
-    req: Request<{}, {}, loginInput>, 
+    req: Request<{}, {}, loginInput['body']>, 
     res:Response<DefaultResponse & {accessToken: string}>
 ) => {
     const ua = req.useragent
     const platform = ua?.isMobile ? 'Mobile' : ua?.isDesktop ? 'Desktop' : 'Tablet'
     const deviceName = `${ua?.browser} on ${ua?.os} (${platform})`
     const ip = req.ip || req.socket.remoteAddress
-    const {username, password} = req.body
+    const username = req.body.username
+    const password = req.body.password
     const {user, accessToken, refreshToken} = await AuthService.login({username, password, deviceName, ip})
 
     res.cookie('jwt', refreshToken,

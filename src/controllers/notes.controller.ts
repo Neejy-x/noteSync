@@ -4,7 +4,7 @@ import type { NoteResponse } from '../dto/responses/global.response'
 import { catchAsync } from '../utils/catchAsync';
 import { Query } from '../dto/input/global.input';
 import { DefaultResponse } from '../dto/responses/global.response';
-import { NoteInput, SearchQueryInput } from '../dto/input/notes.create';
+import { getNoteByIdInput, NoteInput, SearchQueryInput, UpdateNoteInput } from '../dto/input/notes.create';
 
 
 
@@ -28,7 +28,7 @@ export const getAllNotes = catchAsync(async (
 
 export const getNoteById = catchAsync(
     async (
-        req: Request<{noteId: string}>, 
+        req: Request<getNoteByIdInput>, 
         res: Response<DefaultResponse & {data?: NoteResponse}>
     )=>{
 
@@ -64,7 +64,7 @@ export const createNoteHandler = catchAsync(
 
 export const updateNoteHandler = catchAsync(
     async(
-        req:Request<{noteId: string}, {},NoteInput>, 
+        req:Request<UpdateNoteInput['params'], {},UpdateNoteInput['body']>, 
         res: Response<DefaultResponse & {data?: NoteResponse}>
     ) => {
 
@@ -102,7 +102,7 @@ export const deleteNoteHandler = catchAsync(
 export const searchNotesHandler =  
     catchAsync(
     async(
-        req:Request<{}, {}, SearchQueryInput, Query>, 
+        req:Request<{}, {}, SearchQueryInput['body'], Query>, 
         res: Response<DefaultResponse & {page?: number}>
     ) => {
         const page = req.query.page ? Number(req.query.page) : 1
