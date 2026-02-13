@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import { catchAsync } from "../utils/catchAsync";
 import { contributionsService } from "../services/contributions.service";
-import { contributionsInviteType, getContributionsInvitesInput } from "../dto/input/contributions.input";
+import { acceptContributionsInput, contributionsInviteType, getContributionsInvitesInput } from "../dto/input/contributions.input";
 import { DefaultResponse } from "../dto/responses/global.response";
+import { DefaultAgent } from "express-useragent";
 
 
 
@@ -41,5 +42,15 @@ export const getContributionsInvitesHandler = catchAsync(
         message: '',
         data: invites
     })
+
+})
+
+
+export const acceptContributionsHandler = catchAsync(async(req: Request<acceptContributionsInput['params']>, res: Response<DefaultResponse>) => {
+
+    if(!req.user) return res.status(401).json({Success: false, message: 'Unauthorized: user is unauthenticated'})
+    const noteId = req.params.noteId
+    const user_id = req.user.user_id
+    await contributionsService.acceptInvite({user_id, noteId})
 
 })

@@ -18,3 +18,9 @@ export const getContributionsInvitesSchema = z.object({
         limit: z.string().regex(/^\d+$/, 'Limit must be a number').optional()
     })
 })
+
+export const acceptContributionSchema = z.object({
+    params: z.object({
+        noteId: z.string().uuid({message: 'NoteID must be a valid ID'})
+    })
+})
