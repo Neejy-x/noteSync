@@ -295,7 +295,7 @@ static async getSessions(user_id: string): Promise<{ sessionId: string; data: {}
 
 
 
-   static async endSession({user_id, sessionId}: {user_id: string; sessionId:string}){
+   static async endSession({user_id, sessionId}: {user_id: string; sessionId: string}){
 
     const sessionData = await client.hGet(`sessions:${user_id}`, sessionId)
     if(!sessionData) return false

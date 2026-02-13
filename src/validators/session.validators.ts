@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
-export const sessionIdValidator = z.object({
-    sessionId: z.string().nanoid({message: 'Invalid session ID'})
+export const getSessionByIdSchema = z.object({
+    params: z.object({
+        sessionId: z.string().nanoid({message: 'Invalid session ID'})})
 })

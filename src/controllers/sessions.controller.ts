@@ -1,6 +1,7 @@
 import {Request, Response} from 'express'
 import { AuthService } from '../services/auth.service'
 import { DefaultResponse } from '../dto/responses/global.response'
+import { getSessionByIdInput } from '../dto/input/sessions.input'
 
 
 export const getSessionsHandler = (req: Request, res: Response<DefaultResponse>) => {
@@ -18,8 +19,8 @@ export const getSessionsHandler = (req: Request, res: Response<DefaultResponse>)
     })
 }
 
-export const endSessionHandler = async (req: Request, res: Response<DefaultResponse>) => {
-    const sessionId = req.body
+export const endSessionHandler = async (req: Request<getSessionByIdInput['params']>, res: Response<DefaultResponse>) => {
+    const {sessionId} = req.params
     if(!req.user){
         return res.status(403).json({Success: false, message: 'Unauthorized: user not validated'})
     }
