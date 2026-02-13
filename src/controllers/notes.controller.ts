@@ -2,14 +2,13 @@ import { Request, Response } from 'express';
 import { NotesService } from '../services/notes.service';
 import type { NoteResponse } from '../dto/responses/global.response'
 import { catchAsync } from '../utils/catchAsync';
-import { Query } from '../dto/input/global.input';
 import { DefaultResponse } from '../dto/responses/global.response';
-import { getNoteByIdInput, NoteInput, SearchQueryInput, UpdateNoteInput } from '../dto/input/notes.create';
+import { DeleteNoteByIdInput, getAllNotesInput, getNoteByIdInput, NoteInput, SearchQueryInput, UpdateNoteInput } from '../dto/input/notes.create';
 
 
 
 export const getAllNotes = catchAsync(async (
-        req: Request<{}, {}, {}, Query>, 
+        req: Request<{}, {}, {}, getAllNotesInput['query']>, 
         res: Response< 
            DefaultResponse
         >) => {
@@ -85,7 +84,7 @@ export const updateNoteHandler = catchAsync(
 
 export const deleteNoteHandler = catchAsync(
     async(
-        req: Request<{noteId: string}>,
+        req: Request<DeleteNoteByIdInput['params']>,
          res: Response<DefaultResponse>
     ) => {
     const {noteId} = req.params
@@ -102,7 +101,7 @@ export const deleteNoteHandler = catchAsync(
 export const searchNotesHandler =  
     catchAsync(
     async(
-        req:Request<{}, {}, SearchQueryInput['body'], Query>, 
+        req:Request<{}, {}, SearchQueryInput['body'], SearchQueryInput['query']>, 
         res: Response<DefaultResponse & {page?: number}>
     ) => {
         const page = req.query.page ? Number(req.query.page) : 1
