@@ -3,7 +3,6 @@ import { catchAsync } from "../utils/catchAsync";
 import { contributionsService } from "../services/contributions.service";
 import { acceptContributionsInput, contributionsInviteType, getContributionsInvitesInput } from "../dto/input/contributions.input";
 import { DefaultResponse } from "../dto/responses/global.response";
-import { DefaultAgent } from "express-useragent";
 
 
 
@@ -52,5 +51,8 @@ export const acceptContributionsHandler = catchAsync(async(req: Request<acceptCo
     const noteId = req.params.noteId
     const user_id = req.user.user_id
     await contributionsService.acceptInvite({user_id, noteId})
-
+    res.status(201).json({
+        Success: true,
+        message: 'Contribution invite accepted'
+    })
 })
