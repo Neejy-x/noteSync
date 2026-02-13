@@ -24,3 +24,9 @@ export const acceptContributionSchema = z.object({
         noteId: z.string().uuid({message: 'NoteID must be a valid ID'})
     })
 })
+
+export const declineContributionsSchema = z.object({
+    params: z.object({
+        noteId: z.string().uuid({message: 'Note ID must be a valid ID'})
+    })
+})
