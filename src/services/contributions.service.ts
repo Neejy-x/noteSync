@@ -67,10 +67,9 @@ export class contributionsService {
             FROM contributions
             WHERE user_id = ? AND status = 'PENDING'
             LIMIT ?, ?`,
-            [user_id, limit, offset]
+            [user_id, offset, limit]
         )
 
-        if(!rows[0]) return []
         return rows
         
 }

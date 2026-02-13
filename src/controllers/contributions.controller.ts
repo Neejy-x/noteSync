@@ -36,4 +36,10 @@ export const getContributionsInvitesHandler = catchAsync(
 
     const invites = await contributionsService.getAllInvites({user_id, page, limit})
 
+    res.status(200).json({
+        Success: true,
+        message: '',
+        data: invites
+    })
+
 })
