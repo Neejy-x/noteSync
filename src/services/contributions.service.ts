@@ -2,6 +2,7 @@
 import { pool } from "../db/pool";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { NoteResponse } from "../dto/responses/global.response";
+import client from '../config/redisClient'
 
 type NoteRow = RowDataPacket & NoteResponse
 
@@ -54,5 +55,25 @@ export class contributionsService {
     }
     throw err
     }
-}}
+}
+
+
+    static async getAllInvites({user_id, page, limit}: {user_id: string, page: number, limit: number}):Promise<NoteRow[]>{
+
+        const offset = (page - 1) * limit
+       
+        const [rows] = await pool.execute<NoteRow[]>(
+            `SELECT note_id, status, permission
+            FROM contributions
+            WHERE user_id = ? AND status = 'PENDING'
+            LIMIT ?, ?`,
+            [user_id, limit, offset]
+        )
+
+        if(!rows[0]) return []
+        return rows
+        
+}
+
+}
 

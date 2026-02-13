@@ -34,5 +34,6 @@ export const getContributionsInvitesHandler = catchAsync(
     const limit = req.query.limit ? Number(req.query.limit) : 10
     const user_id = req.user.user_id
 
-    
+    const invites = await contributionsService.getAllInvites({user_id, page, limit})
+
 })
